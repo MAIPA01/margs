@@ -169,6 +169,7 @@
     <ClInclude Include="..\include\args_exception.hpp" />
     <ClInclude Include="..\include\basic_args_analizer.hpp" />
     <ClInclude Include="..\include\margs.hpp" />
+    <ClInclude Include="..\include\margs_config.hpp" />
     <ClInclude Include="..\include\margs_libs.hpp" />
     <ClInclude Include="..\include\margs_types.hpp" />
     <ClInclude Include="..\include\decoder.hpp" />
