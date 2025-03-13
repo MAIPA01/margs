@@ -1,5 +1,15 @@
+/*
+ * margs - Maipa's Args Analyzer
+ *
+ * Licensed under the BSD 3-Clause License with Attribution Requirement.
+ * See the LICENSE file for details: https://github.com/MAIPA01/margs/blob/main/LICENSE
+ *
+ * Copyright (c) 2025, Patryk Antosik (MAIPA01)
+ */
+
 #pragma once
 #include "margs_types.hpp"
+#include "args_map.hpp"
 #include "basic_arg.hpp"
 #include "arg_value.hpp"
 #include "args_exception.hpp"
@@ -39,7 +49,6 @@ namespace margs {
 	class basic_args_analizer : private _analizer_info_args<!std::is_void_v<_help_message>, _help_message> {
 	private:
 		using _self_t = basic_args_analizer<_help_message>;
-		using _self_ptr_t = basic_args_analizer_sptr<_help_message>;
 		using _help_data_t = _get_help_data_t<_help_message>;
 		using _arg_info_t = arg_info<_help_data_t>;
 		using _arg_info_sptr_t = arg_info_sptr<_help_data_t>;
@@ -57,7 +66,7 @@ namespace margs {
 
 		struct _analize_data {
 			std::string name_space;
-			std::unordered_map<std::string, arg_value> values;
+			args_map values;
 		};
 
 		struct _arg_data {
@@ -271,7 +280,7 @@ namespace margs {
 			else if (v == 0) {
 				return _read_group(v, argc, argv, data);
 			}
-			throw args_exception(std::string("Not recognized argument '") + argv[v] + "'");
+			throw args_exception(mstd::concat("Not recognized argument '", argv[v], "'"));
 		}
 
 		// --long-name | --long-name <value> | --long-name=<value>
@@ -279,8 +288,10 @@ namespace margs {
 			uint32_t c = 0; // begins with --
 
 			// Get Long Name
-			const std::string& arg_name = (data.name_space == "" ? "" : (data.name_space + "::")) 
-											+ _get_string(argv[v], c, '\0', '=');
+			const std::string& arg_name = mstd::concat(
+				(data.name_space == "" ? "" : mstd::concat(data.name_space, "::")), 
+				_get_string(argv[v], c, '\0', '=')
+			);
 
 			// Get Arg Data
 			const _arg_data& arg_info = _get_arg_data(arg_name);
@@ -304,14 +315,16 @@ namespace margs {
 						value.push_back(_read_value(argv[v]));
 					}
 				}
+				data.values.insert_value(arg_name, value);
+			}
+			else {
+				data.values.insert_flag(arg_name);
 			}
 
 			if (arg_info.has_callback()) {
 				// Execute Action
 				arg_info.callback.value()(value);
 			}
-
-			data.values[arg_name] = value;
 		}
 
 		// -n | -n <value> | -na <value_n> <value_a>
@@ -345,14 +358,16 @@ namespace margs {
 							value.push_back(_read_value(argv[v]));
 						}
 					}
+					data.values.insert_value(arg_name, value);
+				}
+				else {
+					data.values.insert_flag(arg_name);
 				}
 
 				if (arg_info.has_callback()) {
 					// Execute Action
 					arg_info.callback.value()(value);
 				}
-
-				data.values[arg_name] = value;
 			}
 		}
 
@@ -361,7 +376,7 @@ namespace margs {
 			uint32_t c = 0;
 
 			// Get Group Name
-			data.name_space = (data.name_space == "" ? "" : (data.name_space + "::")) + 
+			const std::string& arg_name = data.name_space = (data.name_space == "" ? "" : (data.name_space + "::")) + 
 				_get_string(argv[v], c, '\0');
 
 			// Get Arg Data
@@ -392,14 +407,16 @@ namespace margs {
 						value.push_back(_read_value(argv[v]));
 					}
 				}
+				data.values.insert_group(arg_name, value);
+			}
+			else {
+				data.values.insert_group(arg_name);
 			}
 
 			if (arg_info.has_callback()) {
 				// Get Action
 				arg_info.callback.value()(value);
 			}
-
-			data.values[data.name_space] = value;
 		}
 
 		// value
@@ -412,7 +429,7 @@ namespace margs {
 
 		template<class... _Chars, 
 			std::enable_if_t<(_is_any_v<_Chars, char, unsigned char, signed char> && ...), bool> = true>
-		bool _is_string_end(const char& curr_char, const char& c, const _Chars&... chars) const {
+		constexpr bool _is_string_end(const char& curr_char, const char& c, const _Chars&... chars) const {
 			if (curr_char == c) return true;
 
 			if constexpr (sizeof...(chars) > 0) {
@@ -425,7 +442,7 @@ namespace margs {
 
 		template<class... _Chars, 
 			std::enable_if_t<(_is_any_v<_Chars, char, unsigned char, signed char> && ...), bool> = true>
-		std::string _get_string(const char* table, uint32_t& c, const _Chars&... chars) const {
+		constexpr std::string _get_string(const char* table, uint32_t& c, const _Chars&... chars) const {
 			std::string value = "";
 			while (!_is_string_end(table[c], chars...)) {
 				value += table[c];
@@ -451,21 +468,19 @@ namespace margs {
 	public:
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
 			_enable_if_basic_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const std::shared_ptr<Args>&... args) {
+		basic_args_analizer(const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{} });
 
 			if constexpr (_is_help_message_v) {
 				_analizer_info_t::_program_info = std::make_shared<_arg_info_t>();
-
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
 		}
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
 			_enable_if_basic_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const size_t& values_num, const std::shared_ptr<Args>&... args) {
+		basic_args_analizer(const size_t& values_num, const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{ .values_num = values_num } });
 
@@ -473,14 +488,13 @@ namespace margs {
 				_analizer_info_t::_program_info = std::make_shared<_arg_info_t>();
 				_analizer_info_t::_program_info->values_num = values_num;
 
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
 		}
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
 			_enable_if_basic_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const _values_list_t& values, const std::shared_ptr<Args>&... args) {
+		basic_args_analizer(const _values_list_t& values, const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{ .values_num = values.size() }});
 			_default_values[""] = arg_value(values);
@@ -490,7 +504,6 @@ namespace margs {
 				_analizer_info_t::_program_info->default_values = _default_values[""];
 				_analizer_info_t::_program_info->values_num = values.size();
 
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
@@ -498,7 +511,7 @@ namespace margs {
 
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true, 
 			_enable_if_help_data_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const H& info, const std::shared_ptr<Args>&... args) {
+		basic_args_analizer(const H& info, const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{} });
 
@@ -506,14 +519,13 @@ namespace margs {
 				_analizer_info_t::_program_info = std::make_shared<_arg_info_t>();
 				_analizer_info_t::_program_info->info = info;
 
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
 		}
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
 			_enable_if_help_data_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const size_t& values_num, const H& info, 
+		basic_args_analizer(const size_t& values_num, const H& info, 
 			const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{ .values_num = values_num } });
@@ -523,14 +535,13 @@ namespace margs {
 				_analizer_info_t::_program_info->values_num = values_num;
 				_analizer_info_t::_program_info->info = info;
 
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
 		}
 		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
 			_enable_if_help_data_t<H, _help_data_t> = true>
-		basic_args_analizer(char** argv, const _values_list_t& values, const H& info, 
+		basic_args_analizer(const _values_list_t& values, const H& info, 
 			const std::shared_ptr<Args>&... args) {
 			// Add program data
 			_args_data.insert({ "", _arg_data{ .values_num = values.size() }});
@@ -542,52 +553,17 @@ namespace margs {
 				_analizer_info_t::_program_info->default_values = _default_values[""];
 				_analizer_info_t::_program_info->info = info;
 
-				_get_program_name(argv[0]);
 				_make_help();
 			}
 			_add_args(args...);
 		}
 
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_basic_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, args...);
-		}
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_basic_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const size_t& values_num,
-			const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, values_num, args...);
-		}
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_basic_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const _values_list_t& values,
-			const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, values, args...);
-		}
-
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_help_data_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const H& info, const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, info, args...);
-		}
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_help_data_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const size_t& values_num, const H& info,
-			const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, values_num, info, args...);
-		}
-		template<class... Args, class H = _help_data_t, _enable_if_all_args_t<_help_data_t, Args...> = true,
-			_enable_if_help_data_t<H, _help_data_t> = true>
-		static _self_ptr_t create(char** argv, const _values_list_t& values, const H& info,
-			const std::shared_ptr<Args>&... args) {
-			return std::make_shared<_self_t>(argv, values, info, args...);
-		}
-
-		std::unordered_map<std::string, arg_value> analize(const int& argc, char** argv) {
+		args_map analize(const int& argc, char** argv) {
 			if (argc == 1) {
-				return std::unordered_map<std::string, arg_value>();
+				return args_map();
 			}
+
+			_get_program_name(argv[0]);
 
 			_analize_data data = _analize_data();
 
@@ -620,17 +596,16 @@ namespace margs {
 						program_value.push_back(_read_value(argv[v]));
 					}
 				}
+				data.values.set_program(program_value);
 			}
-
-			data.values[""] = program_value;
 
 			// enter default values (and do callbacks)
 			for (const std::pair<std::string, arg_value>& value : _default_values) {
-				if (data.values.contains(value.first)) {
+				if (data.values.contains_value(value.first)) {
 					continue;
 				}
 
-				data.values.insert(value);
+				data.values.insert_value(value.first, value.second);
 
 				const _arg_data& arg_info = _args_data.at(value.first);
 				if (arg_info.has_callback()) {
@@ -640,11 +615,11 @@ namespace margs {
 
 			// enter default flags (and do callbacks)
 			for (const std::string& flag : _default_flags) {
-				if (data.values.contains(flag)) {
+				if (data.values.contains_flag(flag)) {
 					continue;
 				}
 
-				data.values.insert({ flag, arg_value() });
+				data.values.insert_flag(flag);
 
 				const _arg_data& arg_info = _args_data.at(flag);
 				if (arg_info.has_callback()) {

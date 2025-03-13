@@ -1,14 +1,15 @@
-﻿// pch.h: wstępnie skompilowany plik nagłówka.
-// Wymienione poniżej pliki są kompilowane tylko raz, co poprawia wydajność kompilacji dla przyszłych kompilacji.
-// Ma to także wpływ na wydajność funkcji IntelliSense, w tym uzupełnianie kodu i wiele funkcji przeglądania kodu.
-// Jednak WSZYSTKIE wymienione tutaj pliki będą ponownie kompilowane, jeśli którykolwiek z nich zostanie zaktualizowany między kompilacjami.
-// Nie dodawaj tutaj plików, które będziesz często aktualizować (obniża to korzystny wpływ na wydajność).
+﻿/*
+ * margs - Maipa's Args Analyzer
+ *
+ * Licensed under the BSD 3-Clause License with Attribution Requirement.
+ * See the LICENSE file for details: https://github.com/MAIPA01/margs/blob/main/LICENSE
+ *
+ * Copyright (c) 2025, Patryk Antosik (MAIPA01)
+ */
 
 #ifndef PCH_H
 #define PCH_H
 
-// w tym miejscu dodaj nagłówki, które mają być wstępnie kompilowane
-#include "framework.hpp"
-#include <margs/margs_libs.hpp>
+#include <margs_libs.hpp>
 
 #endif //PCH_H

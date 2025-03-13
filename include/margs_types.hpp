@@ -1,3 +1,12 @@
+/*
+ * margs - Maipa's Args Analyzer
+ *
+ * Licensed under the BSD 3-Clause License with Attribution Requirement.
+ * See the LICENSE file for details: https://github.com/MAIPA01/margs/blob/main/LICENSE
+ *
+ * Copyright (c) 2025, Patryk Antosik (MAIPA01)
+ */
+
 #pragma once
 #include "margs_libs.hpp"
 
@@ -11,7 +20,7 @@ namespace margs {
 	class arg_value;
 
 	template<class T>
-	struct converter;
+	struct decoder;
 
 	// CMD ARG CONTENER
 	enum class arg_type : uint8_t {
@@ -33,6 +42,9 @@ namespace margs {
 	struct help_data;
 	struct help_message;
 
+	// ARGS MAP
+	class args_map;
+
 	// BUILDER
 	template<class _help_data = void>
 	class basic_args_builder;
@@ -42,11 +54,8 @@ namespace margs {
 	// ANALIZER
 	template<class _help_message = void>
 	class basic_args_analizer;
-	template<class _help_message = void>
-	using basic_args_analizer_sptr = std::shared_ptr<basic_args_analizer<_help_message>>;
 
 	using args_analizer = basic_args_analizer<help_message>;
-	using args_analizer_sptr = basic_args_analizer_sptr<help_message>;
 
 	// COMMON TYPES
 	using _short_name_t = unsigned char;
