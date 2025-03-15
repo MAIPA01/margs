@@ -17,5 +17,3 @@
 #include "basic_args_builder.hpp"
 #include "basic_args_analizer.hpp"
 #include "args_exception.hpp"
-
-// TODO: make cmake project
