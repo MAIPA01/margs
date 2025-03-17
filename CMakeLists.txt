@@ -47,9 +47,9 @@ endif()
 
 # Optional compiler flags
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} INTERFACE /W4 /WX /Zc:preprocessor)
+	target_compile_options(${PROJECT_NAME} INTERFACE /Zc:preprocessor)
 else()
-	target_compile_options(${PROJECT_NAME} INTERFACE -Wall -Wextra -Wpendantic -Werror)
+	#target_compile_options(${PROJECT_NAME} INTERFACE -Wall -Wextra -Wpendantic -Werror)
 endif()
 
 # library installation
