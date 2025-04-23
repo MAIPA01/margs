@@ -30,7 +30,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE ${BUILD_HEADERS_PATH}
 )
 
 # check mstd library
-if(mstd_ADDED)
+if(TARGET mstd)
 	target_link_libraries(${PROJECT_NAME} INTERFACE mstd)
 endif()
 
