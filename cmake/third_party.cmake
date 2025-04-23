@@ -26,7 +26,5 @@ include(${CPM_DOWNLOAD_LOCATION})
 CPMAddPackage("gh:MAIPA01/mstd#main")
 
 if(mstd_ADDED)
-    include_directories(${mstd_SOURCE_DIR}/include)
-
     message(STATUS "CMake added local mstd: ${mstd_SOURCE_DIR}")
 endif()

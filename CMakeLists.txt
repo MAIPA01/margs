@@ -30,7 +30,10 @@ target_include_directories(${PROJECT_NAME} INTERFACE ${BUILD_HEADERS_PATH}
 )
 
 # check mstd library
-target_link_libraries(${PROJECT_NAME} INTERFACE mstd)
+if(mstd_ADDED)
+	target_include_directories(${PROJECT_NAME} INTERFACE ${mstd_SOURCE_DIR}/include)
+	target_link_libraries(${PROJECT_NAME} INTERFACE mstd)
+endif()
 
 # Optional compiler flags
 if(MSVC)
