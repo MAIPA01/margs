@@ -80,7 +80,7 @@ namespace margs {
 	public:
 		constexpr arg_value() : _type(_value_type::null) {}
 		constexpr arg_value(const arg_value& value) : _type(value._type), _value(value._value) {}
-		constexpr arg_value(const std::string& value) : _type(_value_type::scalar), 
+		arg_value(const std::string& value) : _type(_value_type::scalar), 
 			_value(std::make_shared<std::string>(value)) {}
 		arg_value(const _vector_type& values) : _type(_value_type::sequence) {
 			_vector_ptr curr_value = std::make_shared<_vector_type>();
