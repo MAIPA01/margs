@@ -74,11 +74,11 @@ namespace margs {
 			callback(values.at(Is).as<Ts>()...);
 		}
 		
-		static constexpr arg_callback_t _make_lambda(const _flag_callback_t& callback) {
+		static arg_callback_t _make_lambda(const _flag_callback_t& callback) {
 			return [callback](const arg_value&) -> void { callback(); };
 		}
 		template<class T, class... Ts>
-		static constexpr arg_callback_t _make_lambda(const _values_callback_t<T, Ts...>& callback) {
+		static arg_callback_t _make_lambda(const _values_callback_t<T, Ts...>& callback) {
 			if constexpr (mstd::is_same_function_v<_values_callback_t<T, Ts...>, arg_callback_t>) {
 				return callback;
 			}
