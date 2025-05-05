@@ -26,16 +26,16 @@ namespace margs {
 				if constexpr (std::is_integral_v<T>) {
 					// signed
 					if constexpr (std::is_signed_v<T>) {
-						return ston(scalar, rhs);
+						return mstd::strtonum(scalar, rhs);
 					}
 					// unsigned
 					else {
-						return stoun(scalar, rhs);
+						return mstd::strtounum(scalar, rhs);
 					}
 				}
 				// floating-point
 				else {
-					return stofp(scalar, rhs);
+					return mstd::strtofp(scalar, rhs);
 				}
 			}
 			// default
