@@ -23,7 +23,7 @@ message(STATUS "Include CPM.cmake from ${CPM_DOWNLOAD_LOCATION}")
 include(${CPM_DOWNLOAD_LOCATION})
 
 # Add mstd library
-CPMAddPackage("gh:MAIPA01/mstd#main")
+CPMAddPackage("gh:MAIPA01/mstd#v1.2.0")
 
 if(mstd_ADDED)
     message(STATUS "CMake added local mstd: ${mstd_SOURCE_DIR}")
